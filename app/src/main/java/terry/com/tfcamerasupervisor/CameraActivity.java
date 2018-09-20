@@ -21,6 +21,8 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -35,6 +37,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Trace;
+import android.util.Log;
 import android.util.Size;
 import android.view.KeyEvent;
 import android.view.Surface;
@@ -44,7 +47,7 @@ import android.widget.Toast;
 import java.nio.ByteBuffer;
 
 public abstract class CameraActivity extends Activity
-    implements OnImageAvailableListener, Camera.PreviewCallback {
+    implements OnImageAvailableListener {
   private static final Logger LOGGER = new Logger();
   public CameraConnectionFragment fragment;
   private static final int PERMISSIONS_REQUEST = 1;
@@ -98,53 +101,54 @@ public abstract class CameraActivity extends Activity
     return yuvBytes[0];
   }
 
-  /**
-   * Callback for android.hardware.Camera API
-   */
-  @Override
-  public void onPreviewFrame(final byte[] bytes, final Camera camera) {
-    if (isProcessingFrame) {
-      LOGGER.w("Dropping frame!");
-      return;
-    }
-
-    try {
-      // Initialize the storage bitmaps once when the resolution is known.
-      if (rgbBytes == null) {
-        Camera.Size previewSize = camera.getParameters().getPreviewSize();
-        previewHeight = previewSize.height;
-        previewWidth = previewSize.width;
-        rgbBytes = new int[previewWidth * previewHeight];
-        onPreviewSizeChosen(new Size(previewSize.width, previewSize.height), 90);
-      }
-    } catch (final Exception e) {
-      LOGGER.e(e, "Exception!");
-      return;
-    }
-
-    isProcessingFrame = true;
-    lastPreviewFrame = bytes;
-    yuvBytes[0] = bytes;
-    yRowStride = previewWidth;
-
-    imageConverter =
-        new Runnable() {
-          @Override
-          public void run() {
-            ImageUtils.convertYUV420SPToARGB8888(bytes, previewWidth, previewHeight, rgbBytes);
-          }
-        };
-
-    postInferenceCallback =
-        new Runnable() {
-          @Override
-          public void run() {
-            camera.addCallbackBuffer(bytes);
-            isProcessingFrame = false;
-          }
-        };
-    processImage();
-  }
+//  /**
+//   * Callback for android.hardware.Camera API
+//   */
+//  @Override
+//  public void onPreviewFrame(final byte[] bytes, final Camera camera) {
+//    if (isProcessingFrame) {
+//      LOGGER.w("Dropping frame!");
+//      return;
+//    }
+//
+//    try {
+//      // Initialize the storage bitmaps once when the resolution is known.
+//      if (rgbBytes == null) {
+//        Camera.Size previewSize = camera.getParameters().getPreviewSize();
+//        previewHeight = previewSize.height;
+//        previewWidth = previewSize.width;
+//        rgbBytes = new int[previewWidth * previewHeight];
+//        onPreviewSizeChosen(new Size(previewSize.width, previewSize.height), 90);
+//      }
+//    } catch (final Exception e) {
+//      LOGGER.e(e, "Exception!");
+//      return;
+//    }
+//
+//    isProcessingFrame = true;
+//    lastPreviewFrame = bytes;
+//    yuvBytes[0] = bytes;
+//    yRowStride = previewWidth;
+//
+//    imageConverter =
+//        new Runnable() {
+//          @Override
+//          public void run() {
+//            ImageUtils.convertYUV420SPToARGB8888(bytes, previewWidth, previewHeight, rgbBytes);
+//          }
+//        };
+//
+//    postInferenceCallback =
+//        new Runnable() {
+//          @Override
+//          public void run() {
+//            camera.addCallbackBuffer(bytes);
+//            isProcessingFrame = false;
+//          }
+//        };
+//    processImage();
+//  }
+//  public Image lastImage;
 
   /**
    * Callback for Camera2 API
@@ -171,7 +175,11 @@ public abstract class CameraActivity extends Activity
       }
       isProcessingFrame = true;
       Trace.beginSection("imageAvailable");
+
+//      lastImage = image;
+
       final Plane[] planes = image.getPlanes();
+
       fillBytes(planes, yuvBytes);
       yRowStride = planes[0].getRowStride();
       final int uvRowStride = planes[1].getRowStride();
@@ -393,6 +401,8 @@ public abstract class CameraActivity extends Activity
         LOGGER.d("Initializing buffer %d at size %d", i, buffer.capacity());
         yuvBytes[i] = new byte[buffer.capacity()];
       }
+      if(buffer.remaining()<yuvBytes[i].length)
+        yuvBytes[i] = new byte[buffer.remaining()];
       buffer.get(yuvBytes[i]);
     }
   }

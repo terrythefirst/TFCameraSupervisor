@@ -723,6 +723,9 @@ public class CameraConnectionFragment extends Fragment {
       previewReader =
           ImageReader.newInstance(
               previewSize.getWidth(), previewSize.getHeight(), ImageFormat.YUV_420_888, 2);
+//      previewReader =
+//              ImageReader.newInstance(
+//                      previewSize.getWidth(), previewSize.getHeight(), ImageFormat.JPEG, 1);
 
       previewReader.setOnImageAvailableListener(imageListener, backgroundHandler);
       previewRequestBuilder.addTarget(previewReader.getSurface());
@@ -738,7 +741,6 @@ public class CameraConnectionFragment extends Fragment {
               if (null == cameraDevice) {
                 return;
               }
-
               // When the session is ready, we start displaying the preview.
               captureSession = cameraCaptureSession;
               try {

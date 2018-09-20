@@ -18,9 +18,11 @@ package terry.com.tfcamerasupervisor;
 
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.SystemClock;
@@ -29,6 +31,8 @@ import android.util.Size;
 import android.util.TypedValue;
 import android.view.WindowManager;
 import android.widget.TextView;
+
+import java.nio.ByteBuffer;
 
 
 public class ClassifierActivity extends CameraActivity implements OnImageAvailableListener {
@@ -154,6 +158,17 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
             final Canvas canvas = new Canvas(croppedBitmap);
             canvas.drawBitmap(rgbFrameBitmap, frameToCropTransform, null);
 
+//            ByteBuffer buffer = lastImage.getPlanes()[0].getBuffer();
+//            byte[] data = new byte[buffer.remaining()];
+//            buffer.get(data);
+//            lastImage.close();
+//            Bitmap rawBitmap = BitmapFactory.decodeByteArray(data,0,data.length,null);
+//            croppedBitmap = Bitmap.createBitmap(rawBitmap, 0, 0, rawBitmap.getWidth(),
+//                    rawBitmap.getHeight(), frameToCropTransform, true);
+//            rawBitmap.recycle();
+
+
+            //croppedBitmap = Bitmap.createScaledBitmap(rgbFrameBitmap,TFCameraSupervisorConfig.INPUT_SIZE,TFCameraSupervisorConfig.INPUT_SIZE,false);
             // For examining the actual TF input.
             if (SAVE_PREVIEW_BITMAP) {
               if(TFCameraSupervisorConfig.lastSaveTimeStamp==-1){
@@ -174,12 +189,12 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
 //            LOGGER.i("Detect: %s", results);
             cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
             if (resultsView == null) {
-              resultsView = (TextView) findViewById(R.id.results);
+              resultsView = findViewById(R.id.results);
             }
             fragment.UIChangeHandler.post(new Runnable() {
               @Override
               public void run() {
-                resultsView.setText(""+System.currentTimeMillis());
+                resultsView.setText(String.format("0.%04d",System.currentTimeMillis()%10000));
               }
             });
             //resultsView.setResults(results);
