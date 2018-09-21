@@ -16,6 +16,8 @@
 
 package terry.com.tfcamerasupervisor;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -23,9 +25,10 @@ import android.app.DialogFragment;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -42,18 +45,16 @@ import android.media.ImageReader.OnImageAvailableListener;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.text.TextUtils;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -64,6 +65,7 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+@SuppressLint("ValidFragment")
 public class CameraConnectionFragment extends Fragment {
   private static final Logger LOGGER = new Logger();
 
@@ -86,36 +88,35 @@ public class CameraConnectionFragment extends Fragment {
     ORIENTATIONS.append(Surface.ROTATION_270, 180);
   }
 
-  int width;
-  int height;
   /**
    * {@link android.view.TextureView.SurfaceTextureListener} handles several lifecycle events on a
    * {@link TextureView}.
    */
   private final TextureView.SurfaceTextureListener surfaceTextureListener =
-      new TextureView.SurfaceTextureListener() {
-        @Override
-        public void onSurfaceTextureAvailable(
-                final SurfaceTexture texture, final int width, final int height) {
-          CameraConnectionFragment.this.width = width;
-          CameraConnectionFragment.this.height = height;
-          openCamera(width, height);
-        }
+          new TextureView.SurfaceTextureListener() {
+            @Override
+            public void onSurfaceTextureAvailable(
+                    final SurfaceTexture texture, final int width, final int height) {
+              CameraConnectionFragment.this.width = width;
+              CameraConnectionFragment.this.height = height;
+              openCamera(width, height);
+            }
 
-        @Override
-        public void onSurfaceTextureSizeChanged(
-                final SurfaceTexture texture, final int width, final int height) {
-          configureTransform(width, height);
-        }
+            @Override
+            public void onSurfaceTextureSizeChanged(
+                    final SurfaceTexture texture, final int width, final int height) {
+              configureTransform(width, height);
+            }
 
-        @Override
-        public boolean onSurfaceTextureDestroyed(final SurfaceTexture texture) {
-          return true;
-        }
+            @Override
+            public boolean onSurfaceTextureDestroyed(final SurfaceTexture texture) {
+              return true;
+            }
 
-        @Override
-        public void onSurfaceTextureUpdated(final SurfaceTexture texture) {}
-      };
+            @Override
+            public void onSurfaceTextureUpdated(final SurfaceTexture texture) {
+            }
+          };
 
   /**
    * Callback for Activities to use to initialize their data once the
@@ -132,17 +133,10 @@ public class CameraConnectionFragment extends Fragment {
   private String backCameraId;//后置摄像头ID
   private String frontCameraId;//前置摄像头ID
 
-  CameraCharacteristics characteristics;
-
-    private boolean isCameraFront = false;//当前是否是前置摄像头
-    private boolean isLightOn = false;//当前闪光灯是否开启
-
-
   private TextureView textureView;
   private ImageView ivSwitchCamera;//切换前后摄像头
   private ImageView ivLightOn;//开关闪光灯
   private ImageView ivClose;//关闭该Activity
-  private TextView ivTextView;
 
   /**
    * A {@link CameraCaptureSession } for camera preview.
@@ -169,33 +163,33 @@ public class CameraConnectionFragment extends Fragment {
    * is called when {@link CameraDevice} changes its state.
    */
   private final CameraDevice.StateCallback stateCallback =
-      new CameraDevice.StateCallback() {
-        @Override
-        public void onOpened(final CameraDevice cd) {
-          // This method is called when the camera is opened.  We start camera preview here.
-          cameraOpenCloseLock.release();
-          cameraDevice = cd;
-          createCameraPreviewSession();
-        }
+          new CameraDevice.StateCallback() {
+            @Override
+            public void onOpened(final CameraDevice cd) {
+              // This method is called when the camera is opened.  We start camera preview here.
+              cameraOpenCloseLock.release();
+              cameraDevice = cd;
+              createCameraPreviewSession();
+            }
 
-        @Override
-        public void onDisconnected(final CameraDevice cd) {
-          cameraOpenCloseLock.release();
-          cd.close();
-          cameraDevice = null;
-        }
+            @Override
+            public void onDisconnected(final CameraDevice cd) {
+              cameraOpenCloseLock.release();
+              cd.close();
+              cameraDevice = null;
+            }
 
-        @Override
-        public void onError(final CameraDevice cd, final int error) {
-          cameraOpenCloseLock.release();
-          cd.close();
-          cameraDevice = null;
-          final Activity activity = getActivity();
-          if (null != activity) {
-            activity.finish();
-          }
-        }
-      };
+            @Override
+            public void onError(final CameraDevice cd, final int error) {
+              cameraOpenCloseLock.release();
+              cd.close();
+              cameraDevice = null;
+              final Activity activity = getActivity();
+              if (null != activity) {
+                activity.finish();
+              }
+            }
+          };
 
   /**
    * An additional thread for running tasks that shouldn't block the UI.
@@ -246,10 +240,10 @@ public class CameraConnectionFragment extends Fragment {
   private final ConnectionCallback cameraConnectionCallback;
 
   private CameraConnectionFragment(
-      final ConnectionCallback connectionCallback,
-      final OnImageAvailableListener imageListener,
-      final int layout,
-      final Size inputSize) {
+          final ConnectionCallback connectionCallback,
+          final OnImageAvailableListener imageListener,
+          final int layout,
+          final Size inputSize) {
     this.cameraConnectionCallback = connectionCallback;
     this.imageListener = imageListener;
     this.layout = layout;
@@ -265,42 +259,13 @@ public class CameraConnectionFragment extends Fragment {
     final Activity activity = getActivity();
     if (activity != null) {
       activity.runOnUiThread(
-          new Runnable() {
-            @Override
-            public void run() {
-              Toast.makeText(activity, text, Toast.LENGTH_SHORT).show();
-            }
-          });
+              new Runnable() {
+                @Override
+                public void run() {
+                  Toast.makeText(activity, text, Toast.LENGTH_SHORT).show();
+                }
+              });
     }
-  }
-
-  // 通过对比得到与宽高比最接近的尺寸（如果有相同尺寸，优先选择，activity我们已经固定了方向，所以这里无需在做判断
-  protected static Size getCloselyPreSize(Size[] sizeMap, int surfaceWidth, int surfaceHeight) {
-    int ReqTmpWidth;
-    int ReqTmpHeight;
-    ReqTmpWidth = surfaceHeight;
-    ReqTmpHeight = surfaceWidth;
-    //先查找preview中是否存在与surfaceview相同宽高的尺寸
-    for (Size size : sizeMap) {
-      if ((size.getWidth() == ReqTmpWidth) && (size.getHeight() == ReqTmpHeight)) {
-        return size;
-      }
-    }
-
-    // 得到与传入的宽高比最接近的size
-    float reqRatio = ((float) ReqTmpWidth) / ReqTmpHeight;
-    float curRatio, deltaRatio;
-    float deltaRatioMin = Float.MAX_VALUE;
-    Size retSize = null;
-    for (Size size : sizeMap) {
-      curRatio = ((float) size.getWidth()) / size.getHeight();
-      deltaRatio = Math.abs(reqRatio - curRatio);
-      if (deltaRatio < deltaRatioMin) {
-        deltaRatioMin = deltaRatio;
-        retSize = size;
-      }
-    }
-    return retSize;
   }
 
   /**
@@ -354,10 +319,10 @@ public class CameraConnectionFragment extends Fragment {
   }
 
   public static CameraConnectionFragment newInstance(
-      final ConnectionCallback callback,
-      final OnImageAvailableListener imageListener,
-      final int layout,
-      final Size inputSize) {
+          final ConnectionCallback callback,
+          final OnImageAvailableListener imageListener,
+          final int layout,
+          final Size inputSize) {
     return new CameraConnectionFragment(callback, imageListener, layout, inputSize);
   }
 
@@ -369,156 +334,79 @@ public class CameraConnectionFragment extends Fragment {
 
   @Override
   public void onViewCreated(final View view, final Bundle savedInstanceState) {
-    textureView = (TextureView) view.findViewById(R.id.texture);
+    textureView = view.findViewById(R.id.texture);
     ivSwitchCamera = view.findViewById(R.id.iv_switchCamera);
     ivLightOn = view.findViewById(R.id.iv_lightOn);
     ivClose = view.findViewById(R.id.iv_close);
-    ivTextView = view.findViewById(R.id.results);
-    ivTextView.setText("OK");
 
-
-      ivSwitchCamera.setOnClickListener(clickListener);
-      ivLightOn.setOnClickListener(clickListener);
-      ivClose.setOnClickListener(clickListener);
-
-    textureView.setOnTouchListener(new View.OnTouchListener() {
-      @Override
-      public boolean onTouch(View view, MotionEvent event) {
-        //两指缩放
-        changeZoom(event);
-        return true;
-      }
-    });
+    ivSwitchCamera.setOnClickListener(clickListener);
+    ivLightOn.setOnClickListener(clickListener);
+    ivClose.setOnClickListener(clickListener);
   }
-    View.OnClickListener clickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            int i = view.getId();
-            if (i == R.id.iv_switchCamera) {
-                //切换摄像头
-                switchCamera();
-            } else if (i == R.id.iv_lightOn) {
-                //开启关闭闪光灯
-                openLight();
-            } else if (i == R.id.iv_close) {
-                //关闭Activity
-                getActivity().finish();
-            }
-        }
-    };
 
-    /**
-     * **********************************************切换摄像头**************************************
-     */
-    public void switchCamera() {
-        if (cameraDevice != null) {
-            cameraDevice.close();
-            cameraDevice = null;
-        }
-
-        if (isCameraFront) {
-            isCameraFront = false;
-            //setupCamera(width, height);
-            openCamera(width,height);
-        } else {
-            isCameraFront = true;
-            //setupCamera(width, height);
-            openCamera(width,height);
-        }
+  View.OnClickListener clickListener = new View.OnClickListener() {
+    @Override
+    public void onClick(View view) {
+      int i = view.getId();
+      if (i == R.id.iv_switchCamera) {
+        //切换摄像头
+        switchCamera();
+      } else if (i == R.id.iv_lightOn) {
+        //开启关闭闪光灯
+        openLight();
+      } else if (i == R.id.iv_close) {
+        //关闭Activity
+        getActivity().finish();
+      }
     }
-
-    /**
-     * ***************************************打开和关闭闪光灯****************************************
-     */
-    public void openLight() {
-        if (isLightOn) {
-            ivLightOn.setSelected(false);
-            isLightOn = false;
-            previewRequestBuilder.set(CaptureRequest.FLASH_MODE,
-                    CaptureRequest.FLASH_MODE_OFF);
-        } else {
-            ivLightOn.setSelected(true);
-            isLightOn = true;
-            previewRequestBuilder.set(CaptureRequest.FLASH_MODE,
-                    CaptureRequest.FLASH_MODE_TORCH);
-        }
-
-        try {
-            if (captureSession != null)
-                captureSession.setRepeatingRequest(previewRequestBuilder.build(), null, backgroundHandler);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+  };
 
   /**
-   * *********************************放大或者缩小**********************************
+   * ***************************************打开和关闭闪光灯****************************************
    */
-  //手指按下的点为(x1, y1)手指离开屏幕的点为(x2, y2)
-  float finger_spacing;
-  int zoom_level = 0;
-  Rect zoom;
+  public void openLight() {
+    if (isLightOn) {
+      ivLightOn.setSelected(false);
+      isLightOn = false;
+      previewRequestBuilder.set(CaptureRequest.FLASH_MODE,
+              CaptureRequest.FLASH_MODE_OFF);
+    } else {
+      ivLightOn.setSelected(true);
+      isLightOn = true;
+      previewRequestBuilder.set(CaptureRequest.FLASH_MODE,
+              CaptureRequest.FLASH_MODE_TORCH);
+    }
 
-  public void changeZoom(MotionEvent event) {
     try {
-      //活动区域宽度和作物区域宽度之比和活动区域高度和作物区域高度之比的最大比率
-      float maxZoom = (characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM)) * 10;
-      Rect m = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
-
-      int action = event.getAction();
-      float current_finger_spacing;
-      //判断当前屏幕的手指数
-      if (event.getPointerCount() > 1) {
-        //计算两个触摸点的距离
-        current_finger_spacing = getFingerSpacing(event);
-
-        if (finger_spacing != 0) {
-          if (current_finger_spacing > finger_spacing && maxZoom > zoom_level) {
-            zoom_level++;
-
-          } else if (current_finger_spacing < finger_spacing && zoom_level > 1) {
-            zoom_level--;
-          }
-
-          int minW = (int) (m.width() / maxZoom);
-          int minH = (int) (m.height() / maxZoom);
-          int difW = m.width() - minW;
-          int difH = m.height() - minH;
-          int cropW = difW / 100 * (int) zoom_level;
-          int cropH = difH / 100 * (int) zoom_level;
-          cropW -= cropW & 3;
-          cropH -= cropH & 3;
-          zoom = new Rect(cropW, cropH, m.width() - cropW, m.height() - cropH);
-          previewRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoom);
-        }
-        finger_spacing = current_finger_spacing;
-      } else {
-        if (action == MotionEvent.ACTION_UP) {
-          //single touch logic,可做点击聚焦操作
-        }
-      }
-
-      try {
-        captureSession.setRepeatingRequest(previewRequestBuilder.build(), new CameraCaptureSession.CaptureCallback() {
-                  @Override
-                  public void onCaptureCompleted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, @NonNull TotalCaptureResult result) {
-                    super.onCaptureCompleted(session, request, result);
-                  }
-                },
-                null);
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+      if (captureSession != null)
+        captureSession.setRepeatingRequest(previewRequestBuilder.build(), null, backgroundHandler);
     } catch (Exception e) {
-      throw new RuntimeException("can not access camera.", e);
+      e.printStackTrace();
     }
   }
 
-  //计算两个触摸点的距离
-  private float getFingerSpacing(MotionEvent event) {
-    float x = event.getX(0) - event.getX(1);
-    float y = event.getY(0) - event.getY(1);
-    return (float) Math.sqrt(x * x + y * y);
+  int width;
+  int height;
+  private boolean isCameraFront = false;//当前是否是前置摄像头
+  private boolean isLightOn = false;//当前闪光灯是否开启
+  /**
+   * **********************************************切换摄像头**************************************
+   */
+  public void switchCamera() {
+    if (cameraDevice != null) {
+      cameraDevice.close();
+      cameraDevice = null;
+    }
+
+    if (isCameraFront) {
+      isCameraFront = false;
+      //setupCamera(width, height);
+      openCamera(width, height);
+    } else {
+      isCameraFront = true;
+      //setupCamera(width, height);
+      openCamera(width, height);
+    }
   }
 
   @Override
@@ -563,22 +451,24 @@ public class CameraConnectionFragment extends Fragment {
       backCameraId = manager.getCameraIdList()[0];//后置摄像头ID
       frontCameraId = manager.getCameraIdList()[1];//前置摄像头ID
 
-      if(isCameraFront){
-          cameraId = frontCameraId;
-      }else{
-          cameraId = backCameraId;
+      if (isCameraFront) {
+        cameraId = frontCameraId;
+      } else {
+        cameraId = backCameraId;
       }
-      characteristics = manager.getCameraCharacteristics(cameraId);
+
+
+      final CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
 
       final StreamConfigurationMap map =
-          characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+              characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
 
       // For still image captures, we use the largest available size.
       final Size largest =
-          Collections.max(
-              Arrays.asList(map.getOutputSizes(ImageFormat.YUV_420_888)),
-              new CompareSizesByArea());
+              Collections.max(
+                      Arrays.asList(map.getOutputSizes(ImageFormat.YUV_420_888)),
+                      new CompareSizesByArea());
 
       sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
 
@@ -586,12 +476,12 @@ public class CameraConnectionFragment extends Fragment {
       // bus' bandwidth limitation, resulting in gorgeous previews but the storage of
       // garbage capture data.
       previewSize =
-          getCloselyPreSize(map.getOutputSizes(SurfaceTexture.class),
-              inputSize.getWidth(),
-              inputSize.getHeight());
+              chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
+                      inputSize.getWidth(),
+                      inputSize.getHeight());
 
       // We fit the aspect ratio of TextureView to the size of preview we picked.
-      final int orientation = getResources().getConfiguration().orientation;
+//      final int orientation = getResources().getConfiguration().orientation;
 //      if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
 //        textureView.setAspectRatio(previewSize.getWidth(), previewSize.getHeight());
 //      } else {
@@ -605,7 +495,7 @@ public class CameraConnectionFragment extends Fragment {
       // TODO(andrewharp): abstract ErrorDialog/RuntimeException handling out into new method and
       // reuse throughout app.
       ErrorDialog.newInstance(getString(R.string.camera_error))
-          .show(getChildFragmentManager(), FRAGMENT_DIALOG);
+              .show(getChildFragmentManager(), FRAGMENT_DIALOG);
       throw new RuntimeException(getString(R.string.camera_error));
     }
 
@@ -623,6 +513,16 @@ public class CameraConnectionFragment extends Fragment {
     try {
       if (!cameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
         throw new RuntimeException("Time out waiting to lock camera opening.");
+      }
+      if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+        // TODO: Consider calling
+        //    ActivityCompat#requestPermissions
+        // here to request the missing permissions, and then overriding
+        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+        //                                          int[] grantResults)
+        // to handle the case where the user grants the permission. See the documentation
+        // for ActivityCompat#requestPermissions for more details.
+        return;
       }
       manager.openCamera(cameraId, stateCallback, backgroundHandler);
     } catch (final CameraAccessException e) {
@@ -665,7 +565,6 @@ public class CameraConnectionFragment extends Fragment {
     backgroundThread.start();
     backgroundHandler = new Handler(backgroundThread.getLooper());
 
-
     UIChangeHandler = new Handler();
   }
 
@@ -678,10 +577,10 @@ public class CameraConnectionFragment extends Fragment {
       backgroundThread.join();
       backgroundThread = null;
       backgroundHandler = null;
+      UIChangeHandler = null;
     } catch (final InterruptedException e) {
       LOGGER.e(e, "Exception!");
     }
-
   }
 
   private final CameraCaptureSession.CaptureCallback captureCallback =
@@ -723,9 +622,6 @@ public class CameraConnectionFragment extends Fragment {
       previewReader =
           ImageReader.newInstance(
               previewSize.getWidth(), previewSize.getHeight(), ImageFormat.YUV_420_888, 2);
-//      previewReader =
-//              ImageReader.newInstance(
-//                      previewSize.getWidth(), previewSize.getHeight(), ImageFormat.JPEG, 1);
 
       previewReader.setOnImageAvailableListener(imageListener, backgroundHandler);
       previewRequestBuilder.addTarget(previewReader.getSurface());
@@ -741,6 +637,7 @@ public class CameraConnectionFragment extends Fragment {
               if (null == cameraDevice) {
                 return;
               }
+
               // When the session is ready, we start displaying the preview.
               captureSession = cameraCaptureSession;
               try {

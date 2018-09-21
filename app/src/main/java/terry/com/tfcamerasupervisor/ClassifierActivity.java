@@ -18,22 +18,19 @@ package terry.com.tfcamerasupervisor;
 
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.SystemClock;
-import android.util.DisplayMetrics;
 import android.util.Size;
 import android.util.TypedValue;
-import android.view.WindowManager;
 import android.widget.TextView;
 
-import java.nio.ByteBuffer;
 
+import java.util.List;
+import java.util.Vector;
 
 public class ClassifierActivity extends CameraActivity implements OnImageAvailableListener {
   private static final Logger LOGGER = new Logger();
@@ -48,43 +45,31 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
 
   private long lastProcessingTimeMs;
 
-//  // These are the settings for the original v1 Inception model. If you want to
-//  // use a model that's been produced from the TensorFlow for Poets codelab,
-//  // you'll need to set IMAGE_SIZE = 299, IMAGE_MEAN = 128, IMAGE_STD = 128,
-//  // INPUT_NAME = "Mul", and OUTPUT_NAME = "final_result".
-//  // You'll also need to update the MODEL_FILE and LABEL_FILE paths to point to
-//  // the ones you produced.
-//  //
-//  // To use v3 Inception model, strip the DecodeJpeg Op from your retrained
-//  // model first:
-//  //
-//  // python strip_unused.py \
-//  // --input_graph=<retrained-pb-file> \
-//  // --output_graph=<your-stripped-pb-file> \
-//  // --input_node_names="Mul" \
-//  // --output_node_names="final_result" \
-//  // --input_binary=true
-//  private static final int INPUT_SIZE = 224;
-//  private static final int IMAGE_MEAN = 117;
-//  private static final float IMAGE_STD = 1;
-//  private static final String INPUT_NAME = "input";
-//  private static final String OUTPUT_NAME = "output";
-//
-//
-//  private static final String MODEL_FILE = "file:///android_asset/tensorflow_inception_graph.pb";
-//  private static final String LABEL_FILE =
-//          "file:///android_asset/imagenet_comp_graph_label_strings.txt";
-//
-//
-//  private static final boolean MAINTAIN_ASPECT = true;
+  // These are the settings for the original v1 Inception model. If you want to
+  // use a model that's been produced from the TensorFlow for Poets codelab,
+  // you'll need to set IMAGE_SIZE = 299, IMAGE_MEAN = 128, IMAGE_STD = 128,
+  // INPUT_NAME = "Mul", and OUTPUT_NAME = "final_result".
+  // You'll also need to update the MODEL_FILE and LABEL_FILE paths to point to
+  // the ones you produced.
+  //
+  // To use v3 Inception model, strip the DecodeJpeg Op from your retrained
+  // model first:
+  //
+  // python strip_unused.py \
+  // --input_graph=<retrained-pb-file> \
+  // --output_graph=<your-stripped-pb-file> \
+  // --input_node_names="Mul" \
+  // --output_node_names="final_result" \
+  // --input_binary=true
 
+
+  private static final Size DESIRED_PREVIEW_SIZE = new Size(640, 480);
 
 
   private Integer sensorOrientation;
   //private Classifier classifier;
   private Matrix frameToCropTransform;
   private Matrix cropToFrameTransform;
-
 
 
   @Override
@@ -94,12 +79,7 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
 
   @Override
   protected Size getDesiredPreviewFrameSize() {
-      //return DESIRED_PREVIEW_SIZE;
-      WindowManager manager = this.getWindowManager();
-      DisplayMetrics outMetrics = new DisplayMetrics();
-      manager.getDefaultDisplay().getMetrics(outMetrics);
-
-      return new Size(outMetrics.widthPixels,outMetrics.heightPixels);
+    return DESIRED_PREVIEW_SIZE;
   }
 
   private static final float TEXT_SIZE_DIP = 10;
@@ -128,75 +108,65 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
 
     LOGGER.i("Initializing at size %dx%d", previewWidth, previewHeight);
     rgbFrameBitmap = Bitmap.createBitmap(previewWidth, previewHeight, Config.ARGB_8888);
-    croppedBitmap = Bitmap.createBitmap(TFCameraSupervisorConfig.INPUT_SIZE, TFCameraSupervisorConfig.INPUT_SIZE, Config.ARGB_8888);
+    croppedBitmap = Bitmap.createBitmap(
+            TFCameraSupervisorConfig.INPUT_SIZE,
+            TFCameraSupervisorConfig.INPUT_SIZE,
+            Config.ARGB_8888);
 
     frameToCropTransform = ImageUtils.getTransformationMatrix(
         previewWidth, previewHeight,
-            TFCameraSupervisorConfig.INPUT_SIZE,
-            TFCameraSupervisorConfig.INPUT_SIZE,
+            TFCameraSupervisorConfig.INPUT_SIZE, TFCameraSupervisorConfig.INPUT_SIZE,
         sensorOrientation, TFCameraSupervisorConfig.MAINTAIN_ASPECT);
 
     cropToFrameTransform = new Matrix();
     frameToCropTransform.invert(cropToFrameTransform);
 
-//    addCallback(
-//        new OverlayView.DrawCallback() {
-//          @Override
-//          public void drawCallback(final Canvas canvas) {
-//            renderDebug(canvas);
-//          }
-//        });
   }
 
   @Override
   protected void processImage() {
+
+
+    // For examining the actual TF input.
+//    if (SAVE_PREVIEW_BITMAP) {
+//      ImageUtils.saveBitmap(croppedBitmap);
+//    }
     runInBackground(
         new Runnable() {
           @Override
           public void run() {
-            rgbFrameBitmap.setPixels(getRgbBytes(), 0, previewWidth, 0, 0, previewWidth, previewHeight);
-            final Canvas canvas = new Canvas(croppedBitmap);
-            canvas.drawBitmap(rgbFrameBitmap, frameToCropTransform, null);
+            //final long startTime = SystemClock.uptimeMillis();
+            //final List<Classifier.Recognition> results = classifier.recognizeImage(croppedBitmap);
+            //lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
+            //LOGGER.i("Detect: %s", results);
+              rgbFrameBitmap.setPixels(getRgbBytes(), 0, previewWidth, 0, 0, previewWidth, previewHeight);
+              final Canvas canvas = new Canvas(croppedBitmap);
+              canvas.drawBitmap(rgbFrameBitmap, frameToCropTransform, null);
 
-//            ByteBuffer buffer = lastImage.getPlanes()[0].getBuffer();
-//            byte[] data = new byte[buffer.remaining()];
-//            buffer.get(data);
-//            lastImage.close();
-//            Bitmap rawBitmap = BitmapFactory.decodeByteArray(data,0,data.length,null);
-//            croppedBitmap = Bitmap.createBitmap(rawBitmap, 0, 0, rawBitmap.getWidth(),
-//                    rawBitmap.getHeight(), frameToCropTransform, true);
-//            rawBitmap.recycle();
-
-
-            //croppedBitmap = Bitmap.createScaledBitmap(rgbFrameBitmap,TFCameraSupervisorConfig.INPUT_SIZE,TFCameraSupervisorConfig.INPUT_SIZE,false);
-            // For examining the actual TF input.
-            if (SAVE_PREVIEW_BITMAP) {
-              if(TFCameraSupervisorConfig.lastSaveTimeStamp==-1){
-                TFCameraSupervisorConfig.lastSaveTimeStamp = System.currentTimeMillis();
-                ImageUtils.saveBitmap(croppedBitmap);
-              }else{
-                long nowSaveTimeStap = System.currentTimeMillis();
-                if(nowSaveTimeStap-TFCameraSupervisorConfig.lastSaveTimeStamp>
-                        TFCameraSupervisorConfig.saveInterval){
-                  ImageUtils.saveBitmap(croppedBitmap);
-                }
+              if (SAVE_PREVIEW_BITMAP) {
+                  if(TFCameraSupervisorConfig.lastSaveTimeStamp==-1){
+                      TFCameraSupervisorConfig.lastSaveTimeStamp = System.currentTimeMillis();
+                      ImageUtils.saveBitmap(croppedBitmap);
+                  }else{
+                      long nowSaveTimeStap = System.currentTimeMillis();
+                      if(nowSaveTimeStap-TFCameraSupervisorConfig.lastSaveTimeStamp>
+                              TFCameraSupervisorConfig.saveInterval){
+                          ImageUtils.saveBitmap(croppedBitmap);
+                      }
+                  }
               }
-            }
 
-//            final long startTime = SystemClock.uptimeMillis();
-//            final List<Classifier.Recognition> results = classifier.recognizeImage(croppedBitmap);
-//            lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
-//            LOGGER.i("Detect: %s", results);
             cropCopyBitmap = Bitmap.createBitmap(croppedBitmap);
             if (resultsView == null) {
-              resultsView = findViewById(R.id.results);
+              resultsView =findViewById(R.id.results);
             }
-            fragment.UIChangeHandler.post(new Runnable() {
-              @Override
-              public void run() {
-                resultsView.setText(String.format("0.%04d",System.currentTimeMillis()%10000));
-              }
-            });
+            if(fragment.UIChangeHandler!=null)
+                fragment.UIChangeHandler.post(new Runnable() {
+                      @Override
+                      public void run() {
+                          resultsView.setText(String.format("0.%04d",System.currentTimeMillis()%10000));
+                      }
+                  });
             //resultsView.setResults(results);
             //requestRender();
             readyForNextImage();
@@ -206,23 +176,24 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
 
   @Override
   public void onSetDebug(boolean debug) {
-//    classifier.enableStatLogging(debug);
+
+    //classifier.enableStatLogging(debug);
   }
 
-  private void renderDebug(final Canvas canvas) {
-    if (!isDebug()) {
-      return;
-    }
-    final Bitmap copy = cropCopyBitmap;
-    if (copy != null) {
-      final Matrix matrix = new Matrix();
-      final float scaleFactor = 2;
-      matrix.postScale(scaleFactor, scaleFactor);
-      matrix.postTranslate(
-          canvas.getWidth() - copy.getWidth() * scaleFactor,
-          canvas.getHeight() - copy.getHeight() * scaleFactor);
-      canvas.drawBitmap(copy, matrix, new Paint());
-
+//  private void renderDebug(final Canvas canvas) {
+//    if (!isDebug()) {
+//      return;
+//    }
+//    final Bitmap copy = cropCopyBitmap;
+//    if (copy != null) {
+//      final Matrix matrix = new Matrix();
+//      final float scaleFactor = 2;
+//      matrix.postScale(scaleFactor, scaleFactor);
+//      matrix.postTranslate(
+//          canvas.getWidth() - copy.getWidth() * scaleFactor,
+//          canvas.getHeight() - copy.getHeight() * scaleFactor);
+//      canvas.drawBitmap(copy, matrix, new Paint());
+//
 //      final Vector<String> lines = new Vector<String>();
 //      if (classifier != null) {
 //        String statString = classifier.getStatString();
@@ -239,6 +210,6 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
 //      lines.add("Inference time: " + lastProcessingTimeMs + "ms");
 //
 //      borderedText.drawLines(canvas, 10, canvas.getHeight() - 10, lines);
-    }
-  }
+//    }
+//  }
 }
