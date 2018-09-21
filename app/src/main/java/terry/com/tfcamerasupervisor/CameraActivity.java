@@ -21,6 +21,11 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -90,6 +95,11 @@ public abstract class CameraActivity extends Activity
     return rgbBytes;
   }
 
+  protected Bitmap getRawBitmap(){
+    imageConverter.run();
+    return rawBitmap;
+  }
+
   protected int getLuminanceStride() {
     return yRowStride;
   }
@@ -99,11 +109,14 @@ public abstract class CameraActivity extends Activity
   }
 
 
+  Image nextImage;
+  Bitmap rawBitmap;
   /**
    * Callback for Camera2 API
    */
   @Override
   public void onImageAvailable(final ImageReader reader) {
+
     //We need wait until we have some size from onPreviewSizeChosen
     if (previewWidth == 0 || previewHeight == 0) {
       return;
@@ -124,26 +137,33 @@ public abstract class CameraActivity extends Activity
       }
       isProcessingFrame = true;
       Trace.beginSection("imageAvailable");
-      final Plane[] planes = image.getPlanes();
-      fillBytes(planes, yuvBytes);
-      yRowStride = planes[0].getRowStride();
-      final int uvRowStride = planes[1].getRowStride();
-      final int uvPixelStride = planes[1].getPixelStride();
+//      final Plane[] planes = image.getPlanes();
+//      fillBytes(planes, yuvBytes);
+//      yRowStride = planes[0].getRowStride();
+//      final int uvRowStride = planes[1].getRowStride();
+//      final int uvPixelStride = planes[1].getPixelStride();
+      nextImage = image;
 
       imageConverter =
           new Runnable() {
             @Override
             public void run() {
-              ImageUtils.convertYUV420ToARGB8888(
-                  yuvBytes[0],
-                  yuvBytes[1],
-                  yuvBytes[2],
-                  previewWidth,
-                  previewHeight,
-                  yRowStride,
-                  uvRowStride,
-                  uvPixelStride,
-                  rgbBytes);
+              //converting to JPEG
+              ByteBuffer buffer = nextImage.getPlanes()[0].getBuffer();
+              byte[] data = new byte[buffer.remaining()];
+              buffer.get(data);
+              rawBitmap = BitmapFactory.decodeByteArray(data,0,data.length);
+
+//              ImageUtils.convertYUV420ToARGB8888(
+//                  yuvBytes[0],
+//                  yuvBytes[1],
+//                  yuvBytes[2],
+//                  previewWidth,
+//                  previewHeight,
+//                  yRowStride,
+//                  uvRowStride,
+//                  uvPixelStride,
+//                  rgbBytes);
             }
           };
 

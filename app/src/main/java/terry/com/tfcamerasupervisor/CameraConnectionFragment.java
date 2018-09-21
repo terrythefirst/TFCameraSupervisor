@@ -476,7 +476,9 @@ public class CameraConnectionFragment extends Fragment {
       // Danger, W.R.! Attempting to use too large a preview size could  exceed the camera
       // bus' bandwidth limitation, resulting in gorgeous previews but the storage of
       // garbage capture data.
-      previewSize = Camera2Util.getMinPreSize(map.getOutputSizes(SurfaceTexture.class), width, height, TFCameraSupervisorConfig.PREVIEW_MAX_HEIGHT);
+
+      previewSize = Camera2Util.getMinPreSize(map.getOutputSizes(ImageFormat.YUV_420_888), inputSize.getWidth(), inputSize.getHeight(), TFCameraSupervisorConfig.PREVIEW_MAX_HEIGHT);
+                //Camera2Util.getMinPreSize(map.getOutputSizes(SurfaceTexture.class), width, height, TFCameraSupervisorConfig.PREVIEW_MAX_HEIGHT);
 //              chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
 //                      inputSize.getWidth(),
 //                      inputSize.getHeight());
@@ -622,7 +624,7 @@ public class CameraConnectionFragment extends Fragment {
       // Create the reader for the preview frames.
       previewReader =
           ImageReader.newInstance(
-              previewSize.getWidth(), previewSize.getHeight(), ImageFormat.YUV_420_888, 2);
+              previewSize.getWidth(), previewSize.getHeight(), ImageFormat.JPEG, 2);
 
       previewReader.setOnImageAvailableListener(imageListener, backgroundHandler);
       previewRequestBuilder.addTarget(previewReader.getSurface());
@@ -686,7 +688,7 @@ public class CameraConnectionFragment extends Fragment {
     final int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
     final Matrix matrix = new Matrix();
     final RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
-    final RectF bufferRect = new RectF(0, 0, previewSize.getHeight(), previewSize.getWidth());
+    final RectF bufferRect = new RectF(0, 0, previewSize.getWidth(), previewSize.getHeight());
     final float centerX = viewRect.centerX();
     final float centerY = viewRect.centerY();
     if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {

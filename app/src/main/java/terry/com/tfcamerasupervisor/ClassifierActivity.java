@@ -85,7 +85,7 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
       DisplayMetrics outMetrics = new DisplayMetrics();
       manager.getDefaultDisplay().getMetrics(outMetrics);
 
-      return new Size(outMetrics.widthPixels,outMetrics.heightPixels);
+      return new Size(outMetrics.widthPixels/2,outMetrics.heightPixels/2);
       //return DESIRED_PREVIEW_SIZE;
   }
 
@@ -132,8 +132,6 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
 
   @Override
   protected void processImage() {
-
-
     // For examining the actual TF input.
 //    if (SAVE_PREVIEW_BITMAP) {
 //      ImageUtils.saveBitmap(croppedBitmap);
@@ -146,7 +144,8 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
             //final List<Classifier.Recognition> results = classifier.recognizeImage(croppedBitmap);
             //lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
             //LOGGER.i("Detect: %s", results);
-              rgbFrameBitmap.setPixels(getRgbBytes(), 0, previewWidth, 0, 0, previewWidth, previewHeight);
+              //rgbFrameBitmap.setPixels(getRgbBytes(), 0, previewWidth, 0, 0, previewWidth, previewHeight);
+              rgbFrameBitmap = getRawBitmap();
               final Canvas canvas = new Canvas(croppedBitmap);
               canvas.drawBitmap(rgbFrameBitmap, frameToCropTransform, null);
 
