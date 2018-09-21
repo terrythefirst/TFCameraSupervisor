@@ -268,6 +268,7 @@ public class CameraConnectionFragment extends Fragment {
     }
   }
 
+
   /**
    * Given {@code choices} of {@code Size}s supported by a camera, chooses the smallest one whose
    * width and height are at least as large as the minimum of both, or an exact match if possible.
@@ -475,10 +476,10 @@ public class CameraConnectionFragment extends Fragment {
       // Danger, W.R.! Attempting to use too large a preview size could  exceed the camera
       // bus' bandwidth limitation, resulting in gorgeous previews but the storage of
       // garbage capture data.
-      previewSize =
-              chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
-                      inputSize.getWidth(),
-                      inputSize.getHeight());
+      previewSize = Camera2Util.getMinPreSize(map.getOutputSizes(SurfaceTexture.class), width, height, TFCameraSupervisorConfig.PREVIEW_MAX_HEIGHT);
+//              chooseOptimalSize(map.getOutputSizes(SurfaceTexture.class),
+//                      inputSize.getWidth(),
+//                      inputSize.getHeight());
 
       // We fit the aspect ratio of TextureView to the size of preview we picked.
 //      final int orientation = getResources().getConfiguration().orientation;

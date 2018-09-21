@@ -24,8 +24,10 @@ import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.media.ImageReader.OnImageAvailableListener;
 import android.os.SystemClock;
+import android.util.DisplayMetrics;
 import android.util.Size;
 import android.util.TypedValue;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 
@@ -63,7 +65,7 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
   // --input_binary=true
 
 
-  private static final Size DESIRED_PREVIEW_SIZE = new Size(640, 480);
+  //private static final Size DESIRED_PREVIEW_SIZE = new Size(640, 480);
 
 
   private Integer sensorOrientation;
@@ -79,7 +81,12 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
 
   @Override
   protected Size getDesiredPreviewFrameSize() {
-    return DESIRED_PREVIEW_SIZE;
+      WindowManager manager = this.getWindowManager();
+      DisplayMetrics outMetrics = new DisplayMetrics();
+      manager.getDefaultDisplay().getMetrics(outMetrics);
+
+      return new Size(outMetrics.widthPixels,outMetrics.heightPixels);
+      //return DESIRED_PREVIEW_SIZE;
   }
 
   private static final float TEXT_SIZE_DIP = 10;

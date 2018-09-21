@@ -27,6 +27,8 @@ public class TFCameraSupervisorConfig {
 
     public static final boolean MAINTAIN_ASPECT = true;
 
+    public static int PREVIEW_MAX_HEIGHT = 1000;//最大高度预览尺寸，默认大于1000的第一个
+
 
     public static final String MODEL_FILE = "file:///android_asset/tensorflow_inception_graph.pb";
     public static final String LABEL_FILE =
