@@ -4,22 +4,6 @@ import java.net.PortUnreachableException;
 
 public class TFCameraSupervisorConfig {//项目参数配置静态类
 
-    // These are the settings for the original v1 Inception model. If you want to
-    // use a model that's been produced from the TensorFlow for Poets codelab,
-    // you'll need to set IMAGE_SIZE = 299, IMAGE_MEAN = 128, IMAGE_STD = 128,
-    // INPUT_NAME = "Mul", and OUTPUT_NAME = "final_result".
-    // You'll also need to update the MODEL_FILE and LABEL_FILE paths to point to
-    // the ones you produced.
-    //
-    // To use v3 Inception model, strip the DecodeJpeg Op from your retrained
-    // model first:
-    //
-    // python strip_unused.py \
-    // --input_graph=<retrained-pb-file> \
-    // --output_graph=<your-stripped-pb-file> \
-    // --input_node_names="Mul" \
-    // --output_node_names="final_result" \
-    // --input_binary=true
 
     public static final int INPUT_WIDTH = 499;//CNN配置参数 传入网络的图片宽度 （拍照的宽度）
     public static final int INPUT_HEIGHT = 499;//CNN配置参数 传入网络的图片高度  （拍照的高度）
@@ -42,6 +26,6 @@ public class TFCameraSupervisorConfig {//项目参数配置静态类
     public static long lastSaveTimeStamp = -1;//时间戳 用于保存图片时间间隔的计算
     public static final int saveInterval = 1000;//保存图片间隔 单位：毫秒 ms
 
-    public static final float countdown_time = 3.0f;//minute  倒数计时时长 单位：分钟
+    public static final float countdown_time =1f;//minute  倒数计时时长 单位：分钟
     public static final int countdown_time_ms = (int)(countdown_time*60*1000);//倒数时长对应秒
 }

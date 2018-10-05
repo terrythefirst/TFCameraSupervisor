@@ -46,7 +46,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Trace;
-import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Size;
@@ -65,6 +64,7 @@ import java.util.Arrays;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import terry.com.tfcamerasupervisor.JTUtil;
 import terry.com.tfcamerasupervisor.NextActivity;
 import terry.com.tfcamerasupervisor.R;
 import terry.com.tfcamerasupervisor.TFCameraSupervisorConfig;
@@ -400,6 +400,8 @@ public class CameraActivity extends Activity {
                         canvas.drawBitmap(rgbFrameBitmap, frameToCropTransform, null);//将Bitmap旋转
 
                         if (TFCameraSupervisorConfig.SAVE_PREVIEW_BITMAP) {//保存预览图片
+                            JTUtil.JT(croppedBitmap);
+
                             if(TFCameraSupervisorConfig.lastSaveTimeStamp==-1){
                                 TFCameraSupervisorConfig.lastSaveTimeStamp = System.currentTimeMillis();
                                 ImageUtils.saveBitmap(croppedBitmap);
@@ -422,7 +424,8 @@ public class CameraActivity extends Activity {
                             UIChangeHandler.post(new Runnable() {
                                 @Override
                                 public void run() {
-                                    resultsView.setText(String.format("0.%04d",System.currentTimeMillis()%10000));//显示结果
+                                    String msg=String.format("%.4f",JTUtil.df);
+                                    resultsView.setText(msg);//显示结果
                                 }
                             });
                         //resultsView.setResults(results);
@@ -677,14 +680,7 @@ public class CameraActivity extends Activity {
             if (!cameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
                 throw new RuntimeException("Time out waiting to lock camera opening.");
             }
-            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
+            if (checkSelfPermission( Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
                 return;
             }
             manager.openCamera(cameraId, stateCallback, backgroundHandler);
