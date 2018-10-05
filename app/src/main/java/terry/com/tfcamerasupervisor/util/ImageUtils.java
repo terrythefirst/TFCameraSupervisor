@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-package terry.com.tfcamerasupervisor;
+package terry.com.tfcamerasupervisor.util;
 
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
@@ -25,7 +25,7 @@ import java.io.FileOutputStream;
 /**
  * Utility class for manipulating images.
  **/
-public class ImageUtils {
+public class ImageUtils {//图像处理类
   @SuppressWarnings("unused")
   private static final Logger LOGGER = new Logger();
 
@@ -73,7 +73,7 @@ public class ImageUtils {
     LOGGER.i("Saving %dx%d bitmap to %s.", bitmap.getWidth(), bitmap.getHeight(), root);
     final File myDir = new File(root);
 
-    if (!myDir.mkdirs()) {
+    if (!myDir.exists()&&!myDir.mkdirs()) {
       LOGGER.i("Make dir failed");
     }
 

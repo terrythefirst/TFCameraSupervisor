@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-package terry.com.tfcamerasupervisor;
+package terry.com.tfcamerasupervisor.util;
 
 import android.util.Log;
 
@@ -23,7 +23,7 @@ import java.util.Set;
 /**
  * Wrapper for the platform log function, allows convenient message prefixing and log disabling.
  */
-public final class Logger {
+public final class Logger {//日志生成类  方便打印日志
   private static final String DEFAULT_TAG = "tensorflow";
   private static final int DEFAULT_MIN_LOG_LEVEL = Log.DEBUG;
 

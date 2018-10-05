@@ -1,4 +1,4 @@
-package terry.com.tfcamerasupervisor;
+package terry.com.tfcamerasupervisor.util;
 
 import android.os.Environment;
 import android.util.Size;
@@ -15,7 +15,7 @@ import java.util.List;
  * 这里为了方便，将部分方法封装到这个Util里面
  */
 
-public class Camera2Util {
+public class Camera2Util {//相机尺寸选择相关类
     //选择合适的视频size，并且不能大于1080p
     private Size chooseVideoSize(Size[] choices) {
         for (Size size : choices) {

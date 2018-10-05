@@ -77,6 +77,19 @@
         android:layout_marginTop="40dp"
         android:layout_marginRight="30dp"
         android:text="XXXX"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="30dp"
+        android:textColor="@color/white"
+        android:id="@+id/time_countdown"
+        android:layout_below="@id/rl_time"
+        android:background="@drawable/textview_boarder"
+        android:layout_alignParentLeft="true"
+        android:padding="10dp"
+        android:layout_marginTop="40dp"
+        android:layout_marginLeft="30dp"
+        android:text="mm:ss"/>
 
     <RelativeLayout
         android:id="@+id/loading_layout"
